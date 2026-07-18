@@ -1,0 +1,1 @@
+# chat-service app package

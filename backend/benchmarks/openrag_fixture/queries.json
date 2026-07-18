@@ -1,0 +1,7 @@
+{
+  "q1": {"query": "How much does consistent hashing reduce key remapping compared to naive hashing?", "type": "extractive", "source": "text-table"},
+  "q2": {"query": "What do virtual nodes improve in a hash ring?", "type": "extractive", "source": "text"},
+  "q3": {"query": "What state does a circuit breaker enter after repeated failures?", "type": "extractive", "source": "text"},
+  "q4": {"query": "What delay values does exponential backoff use across retry attempts?", "type": "extractive", "source": "text-table"},
+  "q5": {"query": "Summarize how circuit breakers and backoff work together to prevent cascading failures.", "type": "abstractive", "source": "text"}
+}

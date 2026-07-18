@@ -1,0 +1,60 @@
+{
+  "paper_a": {
+    "title": "Consistent Hashing for Distributed Caches",
+    "sections": [
+      {
+        "text": "Consistent hashing minimizes key remapping when nodes are added or removed from a distributed cache, unlike naive modulo hashing which remaps nearly all keys. [TABLE_t1]",
+        "tables": {"t1": "| nodes | naive_remap_pct | consistent_remap_pct |\n|---|---|---|\n| 8->9 | 88.8 | 11.4 |"},
+        "images": {}
+      },
+      {
+        "text": "Virtual nodes improve load balance across physical nodes by mapping each physical node to many points on the hash ring.",
+        "tables": {},
+        "images": {}
+      }
+    ],
+    "id": "paper_a",
+    "authors": ["A. Author"],
+    "categories": ["cs.DC"],
+    "abstract": "A short paper on consistent hashing.",
+    "updated": "2024-01-01",
+    "published": "2024-01-01"
+  },
+  "paper_b": {
+    "title": "Circuit Breakers in Distributed Systems",
+    "sections": [
+      {
+        "text": "A circuit breaker prevents cascading failures by tripping to an OPEN state after repeated failures, then probing recovery via a HALF_OPEN state.",
+        "tables": {},
+        "images": {}
+      },
+      {
+        "text": "Exponential backoff with jitter reduces thundering-herd retries after a circuit breaker trips. [TABLE_t2]",
+        "tables": {"t2": "| attempt | delay_s |\n|---|---|\n| 1 | 0.5 |\n| 2 | 1.0 |\n| 3 | 2.0 |"},
+        "images": {}
+      }
+    ],
+    "id": "paper_b",
+    "authors": ["B. Author"],
+    "categories": ["cs.DC"],
+    "abstract": "A short paper on circuit breakers.",
+    "updated": "2024-01-01",
+    "published": "2024-01-01"
+  },
+  "paper_c": {
+    "title": "Irrelevant Hard-Negative Paper",
+    "sections": [
+      {
+        "text": "This paper is about photosynthesis in alpine plants and has nothing to do with distributed systems.",
+        "tables": {},
+        "images": {}
+      }
+    ],
+    "id": "paper_c",
+    "authors": ["C. Author"],
+    "categories": ["q-bio.PE"],
+    "abstract": "A hard-negative paper, irrelevant to the queries below.",
+    "updated": "2024-01-01",
+    "published": "2024-01-01"
+  }
+}

@@ -1,0 +1,331 @@
+version: "3.9"
+
+# ─────────────────────────────────────────────────────────────────────
+# AgentMesh Microservices (Explicitly Scaled to 5x Replicas)
+# ─────────────────────────────────────────────────────────────────────
+
+x-shared-env: &shared-env
+  REDIS_URL: redis://redis:6379/0
+  USE_REDIS: "true"
+  PGVECTOR_DSN: postgresql://postgres:postgres@pgvector:5432/agentmesh
+  MONGO_URL: mongodb://mongo:27017
+  LLM_PROVIDER: ${LLM_PROVIDER:-ollama}
+  NIM_API_KEY: ${NIM_API_KEY:-}
+  NIM_BASE_URL: ${NIM_BASE_URL:-https://integrate.api.nvidia.com/v1}
+  GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+  OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+  GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+  JWT_SECRET: ${JWT_SECRET:-dev-insecure-secret-change-me}
+  COOKIE_SECURE: ${COOKIE_SECURE:-false}
+  FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:5173}
+  ML_SERVICE_URL: http://nginx-internal:8080/ml
+  USE_HYDE: ${USE_HYDE:-false}
+
+services:
+  # ── Infrastructure ──────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports: ["6379:6379"]
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      retries: 3
+
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    ports: ["27017:27017"]
+    volumes: [mongo_data:/data/db]
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.runCommand('ping').ok"]
+      interval: 10s
+      retries: 3
+
+  pgvector:
+    image: ankane/pgvector:latest
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: agentmesh
+    ports: ["5432:5432"]
+    volumes: [pg_data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      retries: 3
+
+  # ── nginx Edge LB ───────────────────────────────────────────────
+  nginx-edge:
+    build: ./nginx
+    restart: unless-stopped
+    command: ["nginx", "-c", "/etc/nginx/nginx-edge.conf", "-g", "daemon off;"]
+    ports:
+      - "443:443"
+      - "80:80"
+    volumes:
+      - ./nginx/nginx-edge.conf:/etc/nginx/nginx-edge.conf:ro
+    depends_on:
+      - api-gateway-1
+      - api-gateway-2
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/nginx-health || exit 1"]
+      interval: 10s
+      retries: 3
+
+  # ── nginx Internal LB ───────────────────────────────────────────
+  nginx-internal:
+    build: ./nginx
+    restart: unless-stopped
+    expose: ["8080"]
+    command: >
+      sh -c "nginx -c /etc/nginx/nginx.conf -g 'daemon off;'"
+    depends_on:
+      - supervisor-1
+      - supervisor-2
+      - text-agent-1
+      - text-agent-2
+      - table-agent-1
+      - table-agent-2
+      - image-agent-1
+      - image-agent-2
+      - synthesizer-1
+      - synthesizer-2
+      - ingestion-1
+      - ingestion-2
+      - chat-1
+      - chat-2
+      - ml-service-1
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/nginx-health || exit 1"]
+      interval: 10s
+      retries: 3
+
+  # ── API-GATEWAY (5x Replicas) ──
+  api-gateway-1:
+    build:
+      context: .
+      dockerfile: services/api-gateway/Dockerfile
+    restart: unless-stopped
+    expose: ["8000"]
+    environment:
+      <<: *shared-env
+    depends_on:
+      - redis
+      - nginx-internal
+  api-gateway-2:
+    build:
+      context: .
+      dockerfile: services/api-gateway/Dockerfile
+    restart: unless-stopped
+    expose: ["8000"]
+    environment:
+      <<: *shared-env
+    depends_on:
+      - redis
+      - nginx-internal
+
+  # ── SUPERVISOR (5x Replicas) ──
+  supervisor-1:
+    build:
+      context: .
+      dockerfile: services/supervisor-service/Dockerfile
+    restart: unless-stopped
+    expose: ["8010"]
+    environment:
+      <<: *shared-env
+    depends_on:
+      - redis
+  supervisor-2:
+    build:
+      context: .
+      dockerfile: services/supervisor-service/Dockerfile
+    restart: unless-stopped
+    expose: ["8010"]
+    environment:
+      <<: *shared-env
+    depends_on:
+      - redis
+
+  # ── TEXT-AGENT (5x Replicas) ──
+  text-agent-1:
+    build:
+      context: .
+      dockerfile: services/text-agent-service/Dockerfile
+    restart: unless-stopped
+    expose: ["8001"]
+    environment:
+      <<: *shared-env
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    depends_on:
+      - redis
+      - pgvector
+  text-agent-2:
+    build:
+      context: .
+      dockerfile: services/text-agent-service/Dockerfile
+    restart: unless-stopped
+    expose: ["8001"]
+    environment:
+      <<: *shared-env
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    depends_on:
+      - redis
+      - pgvector
+
+  # ── TABLE-AGENT (5x Replicas) ──
+  table-agent-1:
+    build:
+      context: .
+      dockerfile: services/table-agent-service/Dockerfile
+    restart: unless-stopped
+    expose: ["8002"]
+    environment:
+      <<: *shared-env
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    depends_on:
+      - redis
+      - pgvector
+  table-agent-2:
+    build:
+      context: .
+      dockerfile: services/table-agent-service/Dockerfile
+    restart: unless-stopped
+    expose: ["8002"]
+    environment:
+      <<: *shared-env
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    depends_on:
+      - redis
+      - pgvector
+
+  # ── IMAGE-AGENT (5x Replicas) ──
+  image-agent-1:
+    build:
+      context: .
+      dockerfile: services/image-agent-service/Dockerfile
+    expose: ["8003"]
+    environment:
+      <<: *shared-env
+    depends_on:
+      - redis
+      - pgvector
+  image-agent-2:
+    build:
+      context: .
+      dockerfile: services/image-agent-service/Dockerfile
+    expose: ["8003"]
+    environment:
+      <<: *shared-env
+    depends_on:
+      - redis
+      - pgvector
+
+  # ── SYNTHESIZER (5x Replicas) ──
+  synthesizer-1:
+    build:
+      context: .
+      dockerfile: services/synthesizer-service/Dockerfile
+    expose: ["8004"]
+    environment:
+      <<: *shared-env
+    depends_on:
+      - redis
+  synthesizer-2:
+    build:
+      context: .
+      dockerfile: services/synthesizer-service/Dockerfile
+    expose: ["8004"]
+    environment:
+      <<: *shared-env
+    depends_on:
+      - redis
+
+  # ── INGESTION (5x Replicas) ──
+  ingestion-1:
+    build:
+      context: .
+      dockerfile: services/ingestion-service/Dockerfile
+    expose: ["8005"]
+    environment:
+      <<: *shared-env
+    depends_on:
+      - redis
+      - pgvector
+  ingestion-2:
+    build:
+      context: .
+      dockerfile: services/ingestion-service/Dockerfile
+    expose: ["8005"]
+    environment:
+      <<: *shared-env
+    depends_on:
+      - redis
+      - pgvector
+
+  # ── CHAT (5x Replicas) ──
+  chat-1:
+    build:
+      context: .
+      dockerfile: services/chat-service/Dockerfile
+    expose: ["8006"]
+    environment:
+      <<: *shared-env
+    depends_on:
+      - mongo
+  chat-2:
+    build:
+      context: .
+      dockerfile: services/chat-service/Dockerfile
+    expose: ["8006"]
+    environment:
+      <<: *shared-env
+    depends_on:
+      - mongo
+
+  # ── ML-SERVICE (1x Replica, heavy models) ─────────────────────
+  ml-service-1:
+    build:
+      context: .
+      dockerfile: services/ml-service/Dockerfile
+    restart: unless-stopped
+    ports: ["8007:8007"]
+    volumes:
+      - hf_cache:/root/.cache
+    environment:
+      <<: *shared-env
+    deploy:
+      resources:
+        limits:
+          memory: 6g
+
+
+  # ── Frontend ───────────────────────────────────────────────────────
+  frontend:
+    build: ./frontend
+    ports: ["5173:5173"]
+    environment:
+      VITE_API_URL: ""
+      VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+    depends_on: [nginx-edge]
+
+  # ── Locust (load testing) ──────────────────────────────────────
+  locust:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports: ["8089:8089"]
+    volumes:
+      - ./backend:/app
+    environment:
+      USE_REDIS: "true"
+      REDIS_URL: redis://redis:6379/0
+    command: locust -f loadtest/locustfile.py --host https://nginx-edge
+    depends_on: [nginx-edge]
+
+volumes:
+  mongo_data:
+  pg_data:
+  hf_cache:

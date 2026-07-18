@@ -1,0 +1,72 @@
+{
+  "consistent_hashing": {
+    "n_keys": 20000,
+    "n_nodes": 8,
+    "consistent_hash_remap_pct_on_add": 11.38,
+    "naive_hash_remap_pct_on_add": 88.83,
+    "theoretical_optimal_pct": 11.11,
+    "improvement_factor": 7.8
+  },
+  "rate_limiter": {
+    "backend": "redis (live, redis://localhost:6379/0)",
+    "burst_requests": 200,
+    "burst_allowed": 76,
+    "burst_rejected": 124,
+    "burst_rejection_rate_pct": 62.0,
+    "sustained_throughput_req_per_sec": 199.9,
+    "configured_refill_rate": 200
+  },
+  "circuit_breaker": {
+    "failure_threshold": 3,
+    "calls_to_trip": 4,
+    "time_to_trip_sec": 0.0,
+    "recovered": true,
+    "recovery_time_sec": 0.3339,
+    "base_backoff_sec": 0.05
+  },
+  "lru_cache": {
+    "n_keys": 500,
+    "cache_capacity": 100,
+    "n_accesses": 20000,
+    "hit_ratio_pct": 66.16,
+    "ops_per_sec": 104663.0
+  },
+  "retrieval_quality": {
+    "dense": {
+      "recall@5": 1.0,
+      "precision@5": 0.233,
+      "mrr": 1.0
+    },
+    "bm25": {
+      "recall@5": 1.0,
+      "precision@5": 0.233,
+      "mrr": 1.0
+    },
+    "hybrid_rrf": {
+      "recall@5": 1.0,
+      "precision@5": 0.233,
+      "mrr": 1.0
+    },
+    "n_queries": 12,
+    "n_corpus_docs": 20,
+    "embedding_backend": "ml-service (http://127.0.0.1:8007, live)"
+  },
+  "contradiction_detection": {
+    "n_test_pairs": 10,
+    "tp": 5,
+    "fp": 1,
+    "tn": 4,
+    "fn": 0,
+    "precision": 0.833,
+    "recall": 1.0,
+    "f1": 0.909,
+    "accuracy": 0.9
+  },
+  "e2e_retrieval_latency": {
+    "n_queries": 12,
+    "p50_ms": 1319.19,
+    "p95_ms": 2289.37,
+    "max_ms": 2606.29,
+    "embedding_backend": "ml-service (http://127.0.0.1:8007, live)"
+  }
+}

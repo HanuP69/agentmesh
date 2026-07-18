@@ -1,0 +1,45 @@
+# Environments
+.env
+.env.*
+! .env.example
+
+# Python virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Python cache / builds
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.eggs/
+.pytest_cache/
+
+# Node.js dependencies & builds
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+frontend/dist/
+frontend/build/
+
+# Dataset & cache directories
+openragbench/
+backend/benchmarks/index_cache_real.pkl
+backend/benchmarks/openrag_fixture/
+
+# Local logs & configurations
+*.log
+.gemini/
+.idea/
+.vscode/
+
+# Model weights
+models/
+**/models/
+**/__pycache__/
+*.pyc

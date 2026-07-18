@@ -1,0 +1,7 @@
+{
+  "q1": {"doc_id": "paper_a", "section_id": 0},
+  "q2": {"doc_id": "paper_a", "section_id": 1},
+  "q3": {"doc_id": "paper_b", "section_id": 0},
+  "q4": {"doc_id": "paper_b", "section_id": 1},
+  "q5": {"doc_id": "paper_b", "section_id": 0}
+}
