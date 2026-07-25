@@ -43,3 +43,8 @@ models/
 **/models/
 **/__pycache__/
 *.pyc
+
+# Keys & Certificates
+*.pem
+agentmesh_key.pem
+

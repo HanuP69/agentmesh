@@ -6,7 +6,7 @@ import QueryPanel from "./components/QueryPanel.jsx";
 import StatusDashboard from "./components/StatusDashboard.jsx";
 import UploadPanel from "./components/UploadPanel.jsx";
 
-const API_URL = import.meta.env.VITE_API_URL !== undefined ? import.meta.env.VITE_API_URL : "http://localhost:8000";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 export default function App() {
   const [status, setStatus] = useState(null);
